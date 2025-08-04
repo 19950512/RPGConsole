@@ -104,8 +104,8 @@ public static class BatalhaService
 
     private static void AtacarMonstro(Jogador jogador, List<Monstro> monstros)
     {
-        var alvos = monstros.Where(m => m.EstaVivo()).ToList();
-        string[] nomesAlvos = alvos.Select(m => m.Nome).ToArray();
+        List<Monstro> alvos = monstros.Where(monstro => monstro.EstaVivo()).ToList();
+        string[] nomesAlvos = alvos.Select(monstro => monstro.Nome).ToArray();
         int alvoIndex = UIHelper.MenuInterativo("Escolha o inimigo para atacar", nomesAlvos);
 
         int danoJogador = jogador.Atacar();

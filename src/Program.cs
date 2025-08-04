@@ -139,25 +139,6 @@ internal class Program
         }
     }
 
-    // Converte string para TipoEquipamento
-    private static TipoEquipamento TipoEquipamentoParse(string texto)
-    {
-        return texto switch
-        {
-            "Cabeca" => TipoEquipamento.Cabeca,
-            "Corpo" => TipoEquipamento.Corpo,
-            "MaoDireita" => TipoEquipamento.MaoDireita,
-            "MaoEsquerda" => TipoEquipamento.MaoEsquerda,
-            "Pernas" => TipoEquipamento.Pernas,
-            "Anel" => TipoEquipamento.Anel,
-            "Amuleto" => TipoEquipamento.Amuleto,
-            "Bracelete" => TipoEquipamento.Bracelete,
-            "Cinto" => TipoEquipamento.Cinto,
-            "Botas" => TipoEquipamento.Botas,
-            _ => throw new ArgumentException($"TipoEquipamento inválido: {texto}")
-        };
-    }
-
     private static void VisitarCidade()
     {
         List<NPC> npcs = new()
