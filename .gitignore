@@ -1,0 +1,33 @@
+# Pastas de build do dotnet
+/src/**/bin/
+src/**/obj/
+
+# Configuração local do VS Code
+.vscode/
+
+# Arquivos do dotnet e nuget
+*.dll
+*.exe
+*.pdb
+*.cache
+*.log
+*.nupkg
+packages/
+
+# Configurações específicas do usuário
+*.user
+*.suo
+*.userosscache
+*.rsuser
+*.userprefs
+
+# Arquivos temporários do sistema
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Logs
+*.log
+
+# Rider
+.idea/
