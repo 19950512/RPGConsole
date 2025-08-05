@@ -1,0 +1,4 @@
+[submodule "src/Protos"]
+    path = src/Protos
+    url = https://github.com/19950512/RPGProto.git
+    branch = master

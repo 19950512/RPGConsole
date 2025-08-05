@@ -2,6 +2,8 @@ namespace RPGConsole.Models;
 
 using RPGConsole.Models;
 using RPGConsole.Models.Itens;
+using System.Text.Json;
+
 
 public class Jogador : Combatente
 {
@@ -15,7 +17,7 @@ public class Jogador : Combatente
 
     public List<Item> Inventario { get; } = new();
     public int SkillCooldown { get; private set; } = 0;
-    
+
     public Dictionary<TipoEquipamento, List<Equipamento>> Equipamentos { get; } =
     Enum.GetValues<TipoEquipamento>().ToDictionary(slot => slot, _ => new List<Equipamento>());
 
@@ -32,6 +34,16 @@ public class Jogador : Combatente
         Vida = VidaMax;
     }
 
+    public static Jogador FromJson(string json)
+    {
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        return JsonSerializer.Deserialize<Jogador>(json, options) ?? throw new Exception("Erro ao desserializar Jogador");
+    }
+
     public void ReceberDano(int dano)
     {
         int danoFinal = Math.Max(0, dano - DefesaTotal);
@@ -42,7 +54,7 @@ public class Jogador : Combatente
     public void AdicionarItem(Item novoItem)
     {
 
-        if(novoItem is Moeda moeda)
+        if (novoItem is Moeda moeda)
         {
             Moedas += moeda.Quantidade;
             Console.WriteLine($"💰 {Nome} recebeu {moeda.Quantidade} moedas! Total: {Moedas}");
@@ -80,7 +92,7 @@ public class Jogador : Combatente
             }
         }
     }
-    
+
     public bool Equipar(Equipamento equipamento)
     {
         TipoEquipamento slot = equipamento.Tipo;
@@ -172,7 +184,7 @@ public class Jogador : Combatente
         int danoBase = AtaqueTotal + Vocacao.UsarSkill();
         return CalcularDano(danoBase, criticoChance: 20, variacaoMax: 3, skill: true);
     }
-    
+
     private int CalcularDano(int baseDano, int criticoChance, int variacaoMax, bool skill = false)
     {
         Random rand = new();
@@ -206,5 +218,17 @@ public class Jogador : Combatente
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine($"🎉 {Nome} subiu para o level {Level}! Vida aumentada para {VidaMax}.");
         Console.ResetColor();
+    }
+    
+
+    public string ToJson()
+    {
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true,  // json "bonitinho"
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase // se quiser camelCase
+        };
+
+        return JsonSerializer.Serialize(this, options);
     }
 }
