@@ -1,6 +1,7 @@
-using Grpc.Net.Client;
-
 namespace RPGConsole.Network;
+
+using Grpc.Net.Client;
+using RPG.Protos;
 
 public static class GameClient
 {

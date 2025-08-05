@@ -260,10 +260,16 @@ public static class UIHelper
 
             Equipamento equipamentoSelecionado = equipamentosNoInventario[escolhaEquipamento];
 
-            jogador.Equipar(equipamentoSelecionado);
-            jogador.RemoverItem(equipamentoSelecionado);
+            if (jogador.Equipar(equipamentoSelecionado))
+            {
+                jogador.RemoverItem(equipamentoSelecionado);
+                Mensagem($"✅ {equipamentoSelecionado.Nome} equipado!", ConsoleColor.Green);
+            }
+            else
+            {
+                Mensagem($"❌ Não foi possível equipar {equipamentoSelecionado.Nome}.", ConsoleColor.Red);
+            }
 
-            Mensagem($"✅ {equipamentoSelecionado.Nome} equipado!", ConsoleColor.Green);
             EsperarTecla();
             break;
         }

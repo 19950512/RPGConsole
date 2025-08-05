@@ -13,6 +13,7 @@ using RPGConsole.Models.Itens;
 using RPGConsole.Models.Monstros;
 using RPGConsole.Models.NPCs;
 using RPGConsole.Models.NPCs.Mercadores;
+using RPG.Protos;
 
 internal class Program
 {
@@ -64,8 +65,7 @@ internal class Program
             {
                 Email = email,
                 Password = senha,
-                Name = nome,
-                Vocacao = vocacao.Nome
+                JsonData = JsonSerializer.Serialize(new Jogador(nome, vocacao))
             });
 
             Console.WriteLine(registerResponse.Message);
@@ -77,9 +77,19 @@ internal class Program
         {
             Console.WriteLine("Login realizado com sucesso!");
             PlayerData p = loginResponse.Player;
-            
+
             string json = loginResponse.Player.JsonData;
-            jogador = JsonSerializer.Deserialize<Jogador>(json);
+            jogador = JsonSerializer.Deserialize<Jogador>(json)!;
+
+            jogador.Vocacao = jogador.NomeVocacao switch
+            {
+                "Knight" => new Knight(),
+                "Mage" => new Mage(),
+                "Paladin" => new Paladin(),
+                "Assassin" => new Assassin(),
+                _ => new Knight()
+            };
+
         }
 
 
@@ -127,6 +137,8 @@ internal class Program
             string[] opcoesMenu = { "Caçar (Hunt)", "Meu Personagem", "Cidade", "Sair" };
             int escolha = UIHelper.MenuInterativo("Menu Principal", opcoesMenu);
 
+            SalvarProgresso(client, jogador);
+
             switch (escolha)
             {
                 case 0: // Caçar / Batalha
@@ -144,8 +156,6 @@ internal class Program
                     return;
             }
         }
-        
-        SalvarProgresso(client, jogador);
 
         Console.WriteLine("💀 Game Over!");
     }

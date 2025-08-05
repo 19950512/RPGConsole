@@ -2,13 +2,19 @@ namespace RPGConsole.Models;
 
 using RPGConsole.Models;
 using RPGConsole.Models.Itens;
+using RPGConsole.Models.Vocacoes;
 using System.Text.Json;
-
+using System.Text.Json.Serialization;
 
 public class Jogador : Combatente
 {
     public string Nome { get; set; }
+
+    [JsonIgnore]
     public Vocacao Vocacao { get; set; }
+    
+    public string NomeVocacao { get; set; }
+
     public int Level { get; set; } = 1;
     public int Experiencia { get; set; } = 0;
     public int VidaMax { get; set; } = 100;
@@ -32,6 +38,14 @@ public class Jogador : Combatente
 
         VidaMax = vocacao.VidaBase;
         Vida = VidaMax;
+
+        NomeVocacao = vocacao.Nome;
+    }
+    public Jogador()
+    {
+        Nome = "Herói";
+        Vocacao = new Knight();
+        NomeVocacao = Vocacao.Nome;
     }
 
     public static Jogador FromJson(string json)
@@ -226,7 +240,8 @@ public class Jogador : Combatente
         var options = new JsonSerializerOptions
         {
             WriteIndented = true,  // json "bonitinho"
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase // se quiser camelCase
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase, // se quiser camelCase
+            IncludeFields = true
         };
 
         return JsonSerializer.Serialize(this, options);
