@@ -17,8 +17,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="Protos\game.proto" GrpcServices="Client" />
+    <Protobuf Include="..\..\RPGShared\Protos\game.proto" GrpcServices="Client" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\RPGShared\RPGShared.csproj" />
+  </ItemGroup>
 
 </Project>

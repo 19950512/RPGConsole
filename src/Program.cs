@@ -3,33 +3,22 @@
 using System;
 using RPGConsole.Network;
 using Grpc.Net.Client;
-
-using RPGConsole.Models;
-using RPGConsole.Services;
 using RPGConsole.Utils;
-using RPGConsole.Models.Vocacoes;
 using System.Text.Json;
-using RPGConsole.Models.Itens;
-using RPGConsole.Models.Monstros;
-using RPGConsole.Models.NPCs;
-using RPGConsole.Models.NPCs.Mercadores;
 using RPG.Protos;
 
 internal class Program
 {
-
-    private static Jogador jogador = new Jogador("Herói", new Knight());
-
     private static string email = "";
+    private static GameService.GameServiceClient? client;
 
     private static async Task Main(string[] args)
     {
-
         Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-        Console.WriteLine("=== Bem-vindo ao RPG Console ===");
+        UIHelper.MostrarTitulo("Bem-vindo ao RPG Console");
 
-        var client = GameClient.Connect(); // client é GameService.GameServiceClient
+        client = GameClient.Connect();
 
         Console.Write("Digite seu e-mail: ");
         email = Console.ReadLine() ?? "teste@teste.com";
@@ -41,183 +30,189 @@ internal class Program
 
         if (!loginResponse.Success)
         {
-            Console.WriteLine("Conta não encontrada. Criando nova conta...");
-            Console.Write("Digite o nome do seu personagem: ");
-            string nome = Console.ReadLine() ?? "Herói";
-
-            if (string.IsNullOrWhiteSpace(nome))
-            {
-                nome = "Herói";
-            }
-
-            Console.WriteLine("Escolha sua vocação: 1-Knight 2-Mage 3-Paladin 4-Assassin");
-            int escolha = int.Parse(Console.ReadLine() ?? "1");
-
-            Vocacao vocacao = escolha switch
-            {
-                2 => new Mage(),
-                3 => new Paladin(),
-                4 => new Assassin(),
-                _ => new Knight()
-            };
-
-            RegisterResponse registerResponse = await client.RegisterAsync(new RegisterRequest
-            {
-                Email = email,
-                Password = senha,
-                JsonData = JsonSerializer.Serialize(new Jogador(nome, vocacao))
-            });
-
-            Console.WriteLine(registerResponse.Message);
-
-            jogador = new Jogador(nome, vocacao);
-
+            await CriarNovaConta();
         }
         else
         {
-            Console.WriteLine("Login realizado com sucesso!");
-            PlayerData p = loginResponse.Player;
-
-            string json = loginResponse.Player.JsonData;
-            jogador = JsonSerializer.Deserialize<Jogador>(json)!;
-
-            jogador.Vocacao = jogador.NomeVocacao switch
-            {
-                "Knight" => new Knight(),
-                "Mage" => new Mage(),
-                "Paladin" => new Paladin(),
-                "Assassin" => new Assassin(),
-                _ => new Knight()
-            };
-
+            Console.WriteLine($"✅ Login realizado com sucesso! Bem-vindo de volta!");
         }
 
-
-        // Equipamentos iniciais só para Knight (exemplo)
-        /*
-        if (vocacao is Knight)
-        {
-            Equipamento escudo = new EscudoDeMadeira();
-            jogador.Equipar(escudo);
-
-            Equipamento armadura = new ArmaduraDeCouro();
-            jogador.Equipar(armadura);
-
-            Equipamento espada = new EspadaDeFerro();
-            jogador.Equipar(espada);
-
-            Equipamento capacete = new CapaceteDeAco();
-            jogador.Equipar(capacete);
-
-            Equipamento botas = new BotasDeCouro();
-            jogador.Equipar(botas);
-
-            Equipamento calcas = new CalcaDeLona();
-            jogador.Equipar(calcas);
-
-            Equipamento anel = new AnelDePrata();
-            jogador.Equipar(anel);
-
-            Equipamento anel2 = new AnelDePrata();
-            jogador.Equipar(anel2);
-
-            Item pocaoDeVida = new PocaoVida();
-            pocaoDeVida.AdicionarQuantidade(9); // Adiciona 9 poções de vida, totalizando 10
-            jogador.Inventario.Add(pocaoDeVida);
-        }
-        */
-
-        MenuPrincipal(client);
+        await MenuPrincipal();
     }
 
-    private static void MenuPrincipal(GameService.GameServiceClient client)
+    private static async Task CriarNovaConta()
     {
-        while (jogador.EstaVivo())
-        {
-            string[] opcoesMenu = { "Caçar (Hunt)", "Meu Personagem", "Cidade", "Sair" };
-            int escolha = UIHelper.MenuInterativo("Menu Principal", opcoesMenu);
+        Console.WriteLine("📝 Conta não encontrada. Criando nova conta...");
+        
+        Console.Write("Digite o nome do seu personagem: ");
+        string nome = Console.ReadLine() ?? "Herói";
 
-            SalvarProgresso(client, jogador);
+        if (string.IsNullOrWhiteSpace(nome))
+        {
+            nome = "Herói";
+        }
+
+        string[] vocacoes = { "Knight", "Mage", "Assassin", "Paladin" };
+        int escolhaVocacao = UIHelper.MenuInterativo("Escolha sua vocação", vocacoes);
+        string vocacaoEscolhida = vocacoes[escolhaVocacao];
+
+        var createRequest = new CreatePlayerRequest
+        {
+            Email = email,
+            PlayerName = nome,
+            VocationName = vocacaoEscolhida
+        };
+
+        var createResponse = await client!.CreatePlayerAsync(createRequest);
+        
+        if (createResponse.Success)
+        {
+            Console.WriteLine($"✅ Personagem {nome} ({vocacaoEscolhida}) criado com sucesso!");
+        }
+        else
+        {
+            Console.WriteLine($"❌ Erro ao criar personagem: {createResponse.Message}");
+        }
+    }
+
+    private static async Task MenuPrincipal()
+    {
+        bool jogando = true;
+
+        while (jogando)
+        {
+            string[] opcoes = { 
+                "📊 Ver Status do Personagem", 
+                "⚔️ Explorar Área", 
+                "🏪 Visitar Cidade", 
+                "💾 Salvar Progresso",
+                "🚪 Sair do Jogo" 
+            };
+
+            int escolha = UIHelper.MenuInterativo("Menu Principal", opcoes);
 
             switch (escolha)
             {
-                case 0: // Caçar / Batalha
-                    IniciarBatalha();
+                case 0:
+                    await MostrarStatusPersonagem();
                     break;
-                case 1: // Meu Personagem
-                    UIHelper.MostrarInformacoesDoPersonagem(jogador);
+                case 1:
+                    await ExplorarArea();
                     break;
-
-                case 2: // Cidade
-                    VisitarCidade();
+                case 2:
+                    await VisitarCidade();
                     break;
-                case 3: // Sair
-                    Console.WriteLine("Saindo do jogo...");
-                    return;
+                case 3:
+                    await SalvarProgresso();
+                    break;
+                case 4:
+                    jogando = false;
+                    Console.WriteLine("👋 Obrigado por jogar!");
+                    break;
             }
         }
-
-        Console.WriteLine("💀 Game Over!");
-    }
-    
-    private static void SalvarProgresso(GameService.GameServiceClient client, Jogador jogador)
-    {
-        PlayerData playerData = new PlayerData
-        {
-            Email = email,
-            JsonData = JsonSerializer.Serialize(jogador)
-        };
-
-        SaveResponse response = client.SavePlayer(playerData);
-        Console.WriteLine(response.Message);
     }
 
-    private static void IniciarBatalha()
+    private static async Task MostrarStatusPersonagem()
     {
-        Random rand = new();
-        int qtdMonstros = rand.Next(1, 4);
-        List<Monstro> monstros = new();
+        var request = new GetPlayerStatusRequest { Email = email };
+        var response = await client!.GetPlayerStatusAsync(request);
 
-        for (int i = 0; i < qtdMonstros; i++)
+        if (response.Success)
         {
-            int tipo = rand.Next(0, 3);
-            monstros.Add(tipo switch
+            Console.Clear();
+            UIHelper.MostrarTitulo("Status do Personagem");
+            
+            Console.WriteLine($"📛 Nome: {response.PlayerName}");
+            Console.WriteLine($"🎭 Vocação: {response.VocationName}");
+            Console.WriteLine($"⭐ Nível: {response.Level}");
+            Console.WriteLine($"❤️ Vida: {response.CurrentHp}/{response.MaxHp}");
+            Console.WriteLine($"⚔️ Ataque: {response.TotalAttack}");
+            Console.WriteLine($"🛡️ Defesa: {response.TotalDefense}");
+            Console.WriteLine($"🎯 Experiência: {response.Experience}");
+            Console.WriteLine($"💰 Moedas: {response.Coins}");
+            
+            Console.WriteLine("\n📦 Inventário:");
+            if (response.Inventory.Count == 0)
             {
-                0 => new Goblin(),
-                1 => new Orc(),
-                2 => new Amazon(),
-                _ => new Slime()
-            });
+                Console.WriteLine("  (Vazio)");
+            }
+            else
+            {
+                foreach (var item in response.Inventory)
+                {
+                    Console.WriteLine($"  • {item}");
+                }
+            }
         }
-
-        Console.Clear();
-        Console.WriteLine($"Batalha iniciada contra {monstros.Count} monstros!");
-        UIHelper.MostrarMonstros(monstros);
-        Console.WriteLine("Pressione ENTER para começar a batalha...");
-        Console.ReadLine();
-
-        BatalhaService.IniciarBatalha(jogador, monstros);
-
-        if (jogador.EstaVivo())
+        else
         {
-            UIHelper.MostrarInformacoesDoPersonagem(jogador);
-            Console.WriteLine("Pressione ENTER para continuar...");
-            Console.ReadLine();
+            Console.WriteLine($"❌ Erro ao obter status: {response.Message}");
         }
+
+        UIHelper.EsperarTecla();
     }
 
-    private static void VisitarCidade()
+    private static async Task ExplorarArea()
     {
-        List<NPC> npcs = new()
+        Console.WriteLine("🗺️ Explorando a área...");
+        
+        var request = new StartBattleRequest { Email = email };
+        var response = await client!.StartBattleAsync(request);
+
+        if (response.Success)
         {
-            new Binda(),
-        };
+            Console.WriteLine($"⚔️ Batalha iniciada contra {response.MonsterCount} monstro(s)!");
+            Console.WriteLine($"🎯 Resultado: {response.BattleResult}");
+            
+            if (response.Victory)
+            {
+                Console.WriteLine($"🎉 Vitória! Você ganhou {response.ExpGained} XP e {response.CoinsGained} moedas!");
+                
+                if (response.ItemsLooted.Count > 0)
+                {
+                    Console.WriteLine("📦 Itens obtidos:");
+                    foreach (var item in response.ItemsLooted)
+                    {
+                        Console.WriteLine($"  • {item}");
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("💀 Derrota! Você foi derrotado...");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"❌ Erro na batalha: {response.Message}");
+        }
 
-        string[] opcoes = npcs.Select(n => $"{n.Tipo} | {n.Nome}").Append("Voltar").ToArray();
-        int escolha = UIHelper.MenuInterativo("Cidade", opcoes);
+        UIHelper.EsperarTecla();
+    }
 
-        if (escolha == npcs.Count) return;
+    private static Task VisitarCidade()
+    {
+        Console.WriteLine("🏘️ Visitando a cidade...");
+        Console.WriteLine("🚧 Funcionalidade será implementada em breve!");
+        UIHelper.EsperarTecla();
+        return Task.CompletedTask;
+    }
 
-        npcs[escolha].Interagir(jogador!);
+    private static async Task SalvarProgresso()
+    {
+        var request = new SaveProgressRequest { Email = email };
+        var response = await client!.SaveProgressAsync(request);
+
+        if (response.Success)
+        {
+            Console.WriteLine("💾 Progresso salvo com sucesso!");
+        }
+        else
+        {
+            Console.WriteLine($"❌ Erro ao salvar: {response.Message}");
+        }
+
+        UIHelper.EsperarTecla();
     }
 }
