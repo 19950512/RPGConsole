@@ -143,4 +143,19 @@ public static class UIHelper
         
         Console.WriteLine(" ✓");
     }
+
+    // 🔹 Separador visual
+    public static void PrintSeparator()
+    {
+        Console.WriteLine(new string('=', 60));
+    }
+
+    // 🔹 Cabeçalho formatado
+    public static void PrintHeader(string title)
+    {
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine($"🎮 {title.ToUpper()}");
+        Console.ResetColor();
+        Console.WriteLine(new string('-', title.Length + 4));
+    }
 }

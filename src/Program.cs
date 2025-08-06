@@ -85,6 +85,7 @@ internal class Program
                 "📊 Ver Status do Personagem", 
                 "⚔️ Explorar Área", 
                 "🏪 Visitar Cidade", 
+                "🌐 Sistema Multiplayer",
                 "💾 Salvar Progresso",
                 "🚪 Sair do Jogo" 
             };
@@ -103,9 +104,12 @@ internal class Program
                     await VisitarCidade();
                     break;
                 case 3:
-                    await SalvarProgresso();
+                    await AcessarMultiplayer();
                     break;
                 case 4:
+                    await SalvarProgresso();
+                    break;
+                case 5:
                     jogando = false;
                     Console.WriteLine("👋 Obrigado por jogar!");
                     break;
@@ -214,5 +218,11 @@ internal class Program
         }
 
         UIHelper.EsperarTecla();
+    }
+
+    private static async Task AcessarMultiplayer()
+    {
+        var multiplayerCommands = new MultiplayerCommands(client!, email);
+        await multiplayerCommands.ShowMenu();
     }
 }
